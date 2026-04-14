@@ -1,4 +1,3 @@
-
 // API Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -39,7 +38,10 @@ function displayTasks() {
     tasks.forEach(task => {
         html += `
             <div class="task-card" data-id="${task._id}">
-                <div class="task-title">📌 ${escapeHtml(task.itemName)}</div>
+                <div class="task-title">
+                    ${task.itemId ? `<span class="task-id-badge">#${escapeHtml(task.itemId)}</span> ` : ''}
+                    📌 ${escapeHtml(task.itemName)}
+                </div>
                 <div class="task-description">${escapeHtml(task.itemDescription || 'No description')}</div>
                 <div class="task-actions">
                     <button onclick="deleteTask('${task._id}')" class="delete-btn">🗑️ Delete</button>
@@ -49,6 +51,14 @@ function displayTasks() {
         `;
     });
     tasksContainer.innerHTML = html;
+}
+
+// Generate a random Item ID if not provided
+function generateItemId() {
+    const prefix = 'TASK';
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${prefix}${timestamp}${random}`;
 }
 
 // Show alert message
@@ -71,12 +81,27 @@ todoForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Get form values
+    let itemId = document.getElementById('itemId').value.trim();
     const itemName = document.getElementById('itemName').value.trim();
     const itemDescription = document.getElementById('itemDescription').value.trim();
     
     // Validate input
     if (itemName === '') {
         showAlert('Please enter an item name!', 'error');
+        return;
+    }
+    
+    // Auto-generate Item ID if not provided
+    if (itemId === '') {
+        itemId = generateItemId();
+        // Optional: Show the generated ID to user
+        showAlert(`Auto-generated Item ID: ${itemId}`, 'success');
+    }
+    
+    // Check for duplicate Item ID (optional validation)
+    const existingTask = tasks.find(task => task.itemId === itemId);
+    if (existingTask) {
+        showAlert(`Item ID "${itemId}" already exists! Please use a unique ID.`, 'error');
         return;
     }
     
@@ -93,6 +118,7 @@ todoForm.addEventListener('submit', async function(e) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                itemId: itemId,
                 itemName: itemName,
                 itemDescription: itemDescription || ''
             })
@@ -102,9 +128,9 @@ todoForm.addEventListener('submit', async function(e) {
         
         if (response.ok && result.success) {
             // Success - clear form and refresh tasks
-            showAlert('✅ Task saved to database successfully!', 'success');
+            showAlert(`✅ Task "${itemId}" saved to database successfully!`, 'success');
             todoForm.reset();
-            document.getElementById('itemName').focus();
+            document.getElementById('itemId').focus();
             
             // Refresh the task list from database
             await fetchTasks();
@@ -163,3 +189,6 @@ document.getElementById('itemName').addEventListener('keypress', function(e) {
         todoForm.dispatchEvent(new Event('submit'));
     }
 });
+
+// Auto-focus on Item ID field when page loads
+document.getElementById('itemId').focus();

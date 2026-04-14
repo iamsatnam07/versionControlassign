@@ -10,8 +10,21 @@
     <div class="container">
       <h1>📝 My To-Do List</h1>
 
-      <!-- Form with Item Name and Item Description -->
+      <!-- Form with Item ID, Item Name and Item Description -->
       <form id="todoForm">
+        <div class="form-group">
+          <label for="itemId">Item ID:</label>
+          <input
+            type="text"
+            id="itemId"
+            name="itemId"
+            placeholder="Enter unique ID (e.g., TASK001)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated if left empty</small
+          >
+        </div>
+
         <div class="form-group">
           <label for="itemName">Item Name:</label>
           <input
