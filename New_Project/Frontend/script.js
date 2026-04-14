@@ -39,7 +39,8 @@ function displayTasks() {
         html += `
             <div class="task-card" data-id="${task._id}">
                 <div class="task-title">
-                    ${task.itemId ? `<span class="task-id-badge">#${escapeHtml(task.itemId)}</span> ` : ''}
+                    ${task.itemId ? `<span class="task-id-badge">ID: ${escapeHtml(task.itemId)}</span>` : ''}
+                    ${task.itemUUID ? `<span class="task-uuid-badge">UUID: ${escapeHtml(task.itemUUID)}</span>` : ''}
                     📌 ${escapeHtml(task.itemName)}
                 </div>
                 <div class="task-description">${escapeHtml(task.itemDescription || 'No description')}</div>
@@ -59,6 +60,21 @@ function generateItemId() {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     return `${prefix}${timestamp}${random}`;
+}
+
+// Generate UUID v4 format
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+// Validate UUID format
+function isValidUUID(uuid) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
 }
 
 // Show alert message
@@ -82,6 +98,7 @@ todoForm.addEventListener('submit', async function(e) {
     
     // Get form values
     let itemId = document.getElementById('itemId').value.trim();
+    let itemUUID = document.getElementById('itemUUID').value.trim();
     const itemName = document.getElementById('itemName').value.trim();
     const itemDescription = document.getElementById('itemDescription').value.trim();
     
@@ -94,14 +111,32 @@ todoForm.addEventListener('submit', async function(e) {
     // Auto-generate Item ID if not provided
     if (itemId === '') {
         itemId = generateItemId();
-        // Optional: Show the generated ID to user
         showAlert(`Auto-generated Item ID: ${itemId}`, 'success');
     }
     
-    // Check for duplicate Item ID (optional validation)
-    const existingTask = tasks.find(task => task.itemId === itemId);
-    if (existingTask) {
+    // Auto-generate UUID if not provided
+    if (itemUUID === '') {
+        itemUUID = generateUUID();
+        showAlert(`Auto-generated UUID: ${itemUUID}`, 'success');
+    } else {
+        // Validate UUID format if user provided one
+        if (!isValidUUID(itemUUID)) {
+            showAlert('Invalid UUID format! Please use format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', 'error');
+            return;
+        }
+    }
+    
+    // Check for duplicate Item ID
+    const existingTaskById = tasks.find(task => task.itemId === itemId);
+    if (existingTaskById) {
         showAlert(`Item ID "${itemId}" already exists! Please use a unique ID.`, 'error');
+        return;
+    }
+    
+    // Check for duplicate UUID
+    const existingTaskByUUID = tasks.find(task => task.itemUUID === itemUUID);
+    if (existingTaskByUUID) {
+        showAlert(`UUID "${itemUUID}" already exists! Please use a unique UUID.`, 'error');
         return;
     }
     
@@ -119,6 +154,7 @@ todoForm.addEventListener('submit', async function(e) {
             },
             body: JSON.stringify({
                 itemId: itemId,
+                itemUUID: itemUUID,
                 itemName: itemName,
                 itemDescription: itemDescription || ''
             })
@@ -128,7 +164,7 @@ todoForm.addEventListener('submit', async function(e) {
         
         if (response.ok && result.success) {
             // Success - clear form and refresh tasks
-            showAlert(`✅ Task "${itemId}" saved to database successfully!`, 'success');
+            showAlert(`✅ Task "${itemId}" (UUID: ${itemUUID}) saved to database successfully!`, 'success');
             todoForm.reset();
             document.getElementById('itemId').focus();
             
@@ -192,3 +228,28 @@ document.getElementById('itemName').addEventListener('keypress', function(e) {
 
 // Auto-focus on Item ID field when page loads
 document.getElementById('itemId').focus();
+
+// Real-time UUID validation (optional)
+document.getElementById('itemUUID').addEventListener('blur', function() {
+    const uuid = this.value.trim();
+    if (uuid !== '' && !isValidUUID(uuid)) {
+        showAlert('Invalid UUID format! Example: 550e8400-e29b-41d4-a716-446655440000', 'error');
+        this.style.borderColor = '#ff6b6b';
+    } else {
+        this.style.borderColor = '#ddd';
+    }
+});
+
+// Real-time Item ID validation for duplicates (optional)
+document.getElementById('itemId').addEventListener('blur', async function() {
+    const itemId = this.value.trim();
+    if (itemId !== '') {
+        const existing = tasks.find(task => task.itemId === itemId);
+        if (existing) {
+            showAlert(`Item ID "${itemId}" already exists!`, 'error');
+            this.style.borderColor = '#ff6b6b';
+        } else {
+            this.style.borderColor = '#ddd';
+        }
+    }
+});

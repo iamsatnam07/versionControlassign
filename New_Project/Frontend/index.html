@@ -10,7 +10,7 @@
     <div class="container">
       <h1>📝 My To-Do List</h1>
 
-      <!-- Form with Item ID, Item Name and Item Description -->
+      <!-- Form with Item ID, Item UUID, Item Name and Item Description -->
       <form id="todoForm">
         <div class="form-group">
           <label for="itemId">Item ID:</label>
@@ -22,6 +22,19 @@
           />
           <small style="color: #999; display: block; margin-top: 5px"
             >Optional - Auto-generated if left empty</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="itemUUID">Item UUID:</label>
+          <input
+            type="text"
+            id="itemUUID"
+            name="itemUUID"
+            placeholder="Enter UUID (e.g., 550e8400-e29b-41d4-a716-446655440000)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated UUID if left empty</small
           >
         </div>
 
