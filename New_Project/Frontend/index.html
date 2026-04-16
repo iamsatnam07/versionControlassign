@@ -10,7 +10,7 @@
     <div class="container">
       <h1>📝 My To-Do List</h1>
 
-      <!-- Form with Item ID, Item UUID, Item Name and Item Description -->
+      <!-- Form with Item ID, Item UUID, Item Hash, Item Name and Item Description -->
       <form id="todoForm">
         <div class="form-group">
           <label for="itemId">Item ID:</label>
@@ -35,6 +35,19 @@
           />
           <small style="color: #999; display: block; margin-top: 5px"
             >Optional - Auto-generated UUID if left empty</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="itemHash">Item Hash:</label>
+          <input
+            type="text"
+            id="itemHash"
+            name="itemHash"
+            placeholder="Enter hash (e.g., SHA256, MD5)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated SHA-256 hash if left empty</small
           >
         </div>
 

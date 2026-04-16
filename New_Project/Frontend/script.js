@@ -41,6 +41,7 @@ function displayTasks() {
                 <div class="task-title">
                     ${task.itemId ? `<span class="task-id-badge">ID: ${escapeHtml(task.itemId)}</span>` : ''}
                     ${task.itemUUID ? `<span class="task-uuid-badge">UUID: ${escapeHtml(task.itemUUID)}</span>` : ''}
+                    ${task.itemHash ? `<span class="task-hash-badge">HASH: ${escapeHtml(task.itemHash)}</span>` : ''}
                     📌 ${escapeHtml(task.itemName)}
                 </div>
                 <div class="task-description">${escapeHtml(task.itemDescription || 'No description')}</div>
@@ -71,10 +72,41 @@ function generateUUID() {
     });
 }
 
+// Generate SHA-256 hash (simplified for frontend)
+async function generateHash(input) {
+    // Convert string to Uint8Array
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input);
+    
+    // Generate SHA-256 hash using Web Crypto API
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    
+    // Convert buffer to hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    return hashHex;
+}
+
+// Generate hash from item name and timestamp
+async function generateItemHash(itemName) {
+    const timestamp = Date.now().toString();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const inputString = `${itemName}-${timestamp}-${randomString}`;
+    return await generateHash(inputString);
+}
+
 // Validate UUID format
 function isValidUUID(uuid) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
+}
+
+// Validate Hash format (hexadecimal, 64 chars for SHA-256, or 32 chars for MD5)
+function isValidHash(hash) {
+    // Accepts SHA-256 (64 hex chars) or MD5 (32 hex chars)
+    const hashRegex = /^[a-f0-9]{32}$|^[a-f0-9]{64}$/i;
+    return hashRegex.test(hash);
 }
 
 // Show alert message
@@ -99,6 +131,7 @@ todoForm.addEventListener('submit', async function(e) {
     // Get form values
     let itemId = document.getElementById('itemId').value.trim();
     let itemUUID = document.getElementById('itemUUID').value.trim();
+    let itemHash = document.getElementById('itemHash').value.trim();
     const itemName = document.getElementById('itemName').value.trim();
     const itemDescription = document.getElementById('itemDescription').value.trim();
     
@@ -126,6 +159,18 @@ todoForm.addEventListener('submit', async function(e) {
         }
     }
     
+    // Auto-generate Hash if not provided
+    if (itemHash === '') {
+        itemHash = await generateItemHash(itemName);
+        showAlert(`Auto-generated SHA-256 Hash: ${itemHash.substring(0, 16)}...`, 'success');
+    } else {
+        // Validate Hash format if user provided one
+        if (!isValidHash(itemHash)) {
+            showAlert('Invalid Hash format! Use MD5 (32 chars) or SHA-256 (64 chars) hexadecimal', 'error');
+            return;
+        }
+    }
+    
     // Check for duplicate Item ID
     const existingTaskById = tasks.find(task => task.itemId === itemId);
     if (existingTaskById) {
@@ -137,6 +182,13 @@ todoForm.addEventListener('submit', async function(e) {
     const existingTaskByUUID = tasks.find(task => task.itemUUID === itemUUID);
     if (existingTaskByUUID) {
         showAlert(`UUID "${itemUUID}" already exists! Please use a unique UUID.`, 'error');
+        return;
+    }
+    
+    // Check for duplicate Hash
+    const existingTaskByHash = tasks.find(task => task.itemHash === itemHash);
+    if (existingTaskByHash) {
+        showAlert(`Hash "${itemHash.substring(0, 16)}..." already exists! Please use a unique hash.`, 'error');
         return;
     }
     
@@ -155,6 +207,7 @@ todoForm.addEventListener('submit', async function(e) {
             body: JSON.stringify({
                 itemId: itemId,
                 itemUUID: itemUUID,
+                itemHash: itemHash,
                 itemName: itemName,
                 itemDescription: itemDescription || ''
             })
@@ -164,7 +217,7 @@ todoForm.addEventListener('submit', async function(e) {
         
         if (response.ok && result.success) {
             // Success - clear form and refresh tasks
-            showAlert(`✅ Task "${itemId}" (UUID: ${itemUUID}) saved to database successfully!`, 'success');
+            showAlert(`✅ Task "${itemId}" (Hash: ${itemHash.substring(0, 16)}...) saved to database successfully!`, 'success');
             todoForm.reset();
             document.getElementById('itemId').focus();
             
@@ -229,7 +282,7 @@ document.getElementById('itemName').addEventListener('keypress', function(e) {
 // Auto-focus on Item ID field when page loads
 document.getElementById('itemId').focus();
 
-// Real-time UUID validation (optional)
+// Real-time UUID validation
 document.getElementById('itemUUID').addEventListener('blur', function() {
     const uuid = this.value.trim();
     if (uuid !== '' && !isValidUUID(uuid)) {
@@ -240,7 +293,18 @@ document.getElementById('itemUUID').addEventListener('blur', function() {
     }
 });
 
-// Real-time Item ID validation for duplicates (optional)
+// Real-time Hash validation
+document.getElementById('itemHash').addEventListener('blur', function() {
+    const hash = this.value.trim();
+    if (hash !== '' && !isValidHash(hash)) {
+        showAlert('Invalid Hash format! Use MD5 (32 hex chars) or SHA-256 (64 hex chars)', 'error');
+        this.style.borderColor = '#ff6b6b';
+    } else {
+        this.style.borderColor = '#ddd';
+    }
+});
+
+// Real-time Item ID validation for duplicates
 document.getElementById('itemId').addEventListener('blur', async function() {
     const itemId = this.value.trim();
     if (itemId !== '') {
@@ -253,3 +317,10 @@ document.getElementById('itemId').addEventListener('blur', async function() {
         }
     }
 });
+
+// Optional: Add copy hash button functionality
+function copyToClipboard(text, type) {
+    navigator.clipboard.writeText(text).then(() => {
+        showAlert(`${type} copied to clipboard!`, 'success');
+    });
+}
