@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full-Stack To-Do App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>📝 My To-Do List</h1>
+
+      <!-- Form with Item ID, Item UUID, Item Hash, Item Name and Item Description -->
+      <form id="todoForm">
+        <div class="form-group">
+          <label for="itemId">Item ID:</label>
+          <input
+            type="text"
+            id="itemId"
+            name="itemId"
+            placeholder="Enter unique ID (e.g., TASK001)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated if left empty</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="itemUUID">Item UUID:</label>
+          <input
+            type="text"
+            id="itemUUID"
+            name="itemUUID"
+            placeholder="Enter UUID (e.g., 550e8400-e29b-41d4-a716-446655440000)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated UUID if left empty</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="itemHash">Item Hash:</label>
+          <input
+            type="text"
+            id="itemHash"
+            name="itemHash"
+            placeholder="Enter hash (e.g., SHA256, MD5)"
+          />
+          <small style="color: #999; display: block; margin-top: 5px"
+            >Optional - Auto-generated SHA-256 hash if left empty</small
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="itemName">Item Name:</label>
+          <input
+            type="text"
+            id="itemName"
+            name="itemName"
+            required
+            placeholder="Enter task name..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="itemDescription">Item Description:</label>
+          <textarea
+            id="itemDescription"
+            name="itemDescription"
+            rows="3"
+            placeholder="Enter task description..."
+          ></textarea>
+        </div>
+
+        <button type="submit">➕ Add Task</button>
+      </form>
+
+      <!-- Loading indicator -->
+      <div
+        id="loadingIndicator"
+        style="display: none; text-align: center; margin-top: 20px"
+      >
+        <div class="loader"></div>
+        <p>Saving to database...</p>
+      </div>
+
+      <!-- To-Do List Display -->
+      <div class="todo-list">
+        <h2>Your Tasks</h2>
+        <div id="tasksContainer">
+          <p class="empty-message">Loading tasks from database...</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
